@@ -13,19 +13,31 @@ class SimpleCheckersModel {
 
   move(rowStart, colStart, rowDest, colDest) {
     assertInRange(rowStart, colStart, rowDest, colDest);
-    
+
     const piece1 = this.getPieceOnSquare(rowStart, colStart);
     const piece2 = this.getPieceOnSquare(rowDest, colDest);
 
-    if (piece1 === undefined 
-      || piece1.team !== this.currentPlayer 
+    let jumpMovesMap;
+    let jumpedPiecePosns;
+
+    if (piece1 === undefined
+      || piece1.team !== this.currentPlayer
       || piece2 !== undefined
       || !canMoveSimple(piece1, rowStart, colStart, rowDest, colDest)) {
-      throw new Error('Invalid move.');
+      jumpMovesMap = getPossibleJumpMoves(this.#board, piece1, rowStart, colStart);
+      jumpedPiecePosns = jumpMovesMap[`${rowDest} ${colDest}`];
+      if (!jumpedPiecePosns) {
+        throw new Error('Invalid move.');
+      }
     }
 
     this.#board[rowDest][colDest] = this.#board[rowStart][colStart];
     this.#board[rowStart][colStart] = undefined;
+    if (jumpedPiecePosns) {
+      jumpedPiecePosns.forEach(posn => {
+        this.#board[posn.row][posn.col] = undefined;
+      });
+    }
 
     if (piece1.team === 1 && rowDest === 0) {
       piece1.king = true;
@@ -39,7 +51,6 @@ class SimpleCheckersModel {
       this.#currentPlayer = 0;
     }
   }
-
 }
 
 function canMoveSimple(piece, rowStart, colStart, rowDest, colDest) {
@@ -49,6 +60,96 @@ function canMoveSimple(piece, rowStart, colStart, rowDest, colDest) {
     return (rowStart - rowDest === 1 && Math.abs(colStart - colDest) === 1);
   } else {
     return (rowDest - rowStart === 1 && Math.abs(colStart - colDest) === 1);
+  }
+}
+
+function getPossibleJumpMoves(board, piece, rowStart, colStart) {
+  const moves = new Map();
+  moves[`${rowStart} ${colStart}`] = [];
+  fillPossibleJumpMovesRecur(board, piece, rowStart, colStart, moves);
+  moves[`${rowStart} ${colStart}`] = undefined;
+  console.log(moves);
+  return moves;
+}
+
+
+// TODO abstract this to remove code duplication
+function fillPossibleJumpMovesRecur(board, piece, row, col, sofar) {
+  if (piece.team === 0 || piece.king) {
+    if (row + 2 < 8 && col + 2 < 8
+      && board[row + 2][col + 2] === undefined
+      && board[row + 1][col + 1] !== undefined
+      && board[row + 1][col + 1].team !== piece.team) {
+      sofar[`${row + 2} ${col + 2}`] = [...sofar[`${row} ${col}`], { row: row + 1, col: col + 1 }];
+      const newBoard = board.map((boardRow, rowIndex) => boardRow.map((boardPiece, colIndex) => {
+        if (row === rowIndex && col === colIndex) {
+          return undefined;
+        } else if (row + 1 === rowIndex && col + 1 === colIndex) {
+          return undefined;
+        } else if (row + 2 === rowIndex && col + 2 === colIndex) {
+          return piece;
+        } else {
+          return boardPiece;
+        }
+      }));
+      fillPossibleJumpMovesRecur(newBoard, piece, row + 2, col + 2, sofar);
+    }
+    if (row + 2 < 8 && col - 2 >= 0
+      && board[row + 2][col - 2] === undefined
+      && board[row + 1][col - 1] !== undefined
+      && board[row + 1][col - 1].team !== piece.team) {
+      sofar[`${row + 2} ${col - 2}`] = [...sofar[`${row} ${col}`], { row: row + 1, col: col - 1 }];
+      const newBoard = board.map((boardRow, rowIndex) => boardRow.map((boardPiece, colIndex) => {
+        if (row === rowIndex && col === colIndex) {
+          return undefined;
+        } else if (row + 1 === rowIndex && col - 1 === colIndex) {
+          return undefined;
+        } else if (row + 2 === rowIndex && col - 2 === colIndex) {
+          return piece;
+        } else {
+          return boardPiece;
+        }
+      }));
+      fillPossibleJumpMovesRecur(newBoard, piece, row + 2, col - 2, sofar);
+    }
+  }
+  if (piece.team === 1 || piece.king) {
+    if (row - 2 >= 0 && col + 2 < 8
+      && board[row - 2][col + 2] === undefined
+      && board[row - 1][col + 1] !== undefined
+      && board[row - 1][col + 1].team !== piece.team) {
+      sofar[`${row - 2} ${col + 2}`] = [...sofar[`${row} ${col}`], { row: row - 1, col: col + 1 }];
+      const newBoard = board.map((boardRow, rowIndex) => boardRow.map((boardPiece, colIndex) => {
+        if (row === rowIndex && col === colIndex) {
+          return undefined;
+        } else if (row - 1 === rowIndex && col + 1 === colIndex) {
+          return undefined;
+        } else if (row - 2 === rowIndex && col + 2 === colIndex) {
+          return piece;
+        } else {
+          return boardPiece;
+        }
+      }));
+      fillPossibleJumpMovesRecur(newBoard, piece, row - 2, col + 2, sofar);
+    }
+    if (row - 2 >= 0 && col - 2 >= 0
+      && board[row - 2][col - 2] === undefined
+      && board[row - 1][col - 1] !== undefined
+      && board[row - 1][col - 1].team !== piece.team) {
+      sofar[`${row - 2} ${col - 2}`] = [...sofar[`${row} ${col}`], { row: row - 1, col: col - 1 }];
+      const newBoard = board.map((boardRow, rowIndex) => boardRow.map((boardPiece, colIndex) => {
+        if (row === rowIndex && col === colIndex) {
+          return undefined;
+        } else if (row - 1 === rowIndex && col - 1 === colIndex) {
+          return undefined;
+        } else if (row - 2 === rowIndex && col - 2 === colIndex) {
+          return piece;
+        } else {
+          return boardPiece;
+        }
+      }));
+      fillPossibleJumpMovesRecur(newBoard, piece, row - 2, col - 2, sofar);
+    }
   }
 }
 
