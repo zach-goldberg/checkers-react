@@ -25,8 +25,18 @@ class CheckersBoard extends React.Component {
     }
 
     handleClick(event) {
-      const row = Math.floor(event.clientY / CELL_SIZE) - 1;
-      const col = Math.floor(event.clientX / CELL_SIZE);
+      const rect = this.canvasRef.current.getBoundingClientRect()
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      let row = Math.floor(y / CELL_SIZE);
+      let col = Math.floor(x / CELL_SIZE);
+
+      if (!this.props.team1Perspective) {
+        row = 7 - row;
+        col = 7 - col;
+      }
+
       const { row: selectedRow, col: selectedCol } = this.state.selectedCell
       const piece = this.model.getPieceOnSquare(row, col);
 
@@ -79,8 +89,14 @@ class CheckersBoard extends React.Component {
         ctx.shadowColor = 'yellow';
         ctx.shadowBlur = 15;
       }
+
       ctx.fillStyle = getColor(row, col);
-      ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      if (this.props.team1Perspective) {
+        ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      } else {
+        ctx.fillRect((7 - col) * CELL_SIZE, (7 - row) * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      }
+      
       ctx.shadowBlur = 0;
       this.drawPiece(ctx, row, col);
     }
@@ -91,6 +107,11 @@ class CheckersBoard extends React.Component {
         return;
       }
     
+      if (!this.props.team1Perspective) {
+        row = 7 - row;
+        col = 7 - col;
+      }
+
       ctx.beginPath();
       ctx.fillStyle = piece.team === 0 ? 'blue' : 'yellow';
       ctx.arc(col * CELL_SIZE + CELL_SIZE / 2, row * CELL_SIZE + CELL_SIZE / 2, CELL_SIZE * 0.4, 0, 2 * Math.PI);
