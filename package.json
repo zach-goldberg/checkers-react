@@ -2,7 +2,7 @@
   "name": "checkers",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://l0rdslingshot.github.io/checkers-react",
+  "homepage": "https://zach-goldberg.github.io/checkers-react",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
