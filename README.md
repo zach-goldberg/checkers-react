@@ -1,3 +1,3 @@
 ## Checkers
 
-<https://l0rdslingshot.github.io/checkers-react/>
+<https://zach-goldberg.github.io/checkers-react/>
